@@ -4,50 +4,38 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using AzSqlFunction.Models;
-using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using System.Data;
 using System.Web.Http;
 using System;
+using AzSqlFunction.Repository;
 
 namespace AzSqlFunction;
 
 public class SqlFunction
 {
-    private readonly IConfiguration _config;
+    private readonly ICarsRepository _repository;
     private readonly ILogger<SqlFunction> _logger;
 
-    public SqlFunction(ILogger<SqlFunction> logger, IConfiguration config)
+    public SqlFunction(ILogger<SqlFunction> logger, ICarsRepository repository)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _config = config ?? throw new ArgumentNullException(nameof(config));
+        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     }
 
     [FunctionName("Car")]
     public async Task<IActionResult> Create(
         [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] Car car)
     {
-        var id = car.Id;
-        _logger.LogInformation("Received Id: {id}", id);
-
-        var query = "INSERT INTO [dbo].[Cars] (Id, Name) VALUES(@id, @name)";
+        _logger.LogInformation("Received Id: {id}", car.Id);
 
         try
         {
-            using var connection = new SqlConnection(_config.GetConnectionString("default"));
-            using var command = new SqlCommand(query, connection);
-            command.Parameters.AddWithValue("id", id);
-            command.Parameters.AddWithValue("name", car.Name);
-            if (connection.State != ConnectionState.Open)
-                connection.Open();
-
-            var _ = await command.ExecuteNonQueryAsync();
+            var result = await _repository.Create(car);
+            return new OkObjectResult(result);
         }
         catch (Exception ex)
         {
             return new ExceptionResult(ex, true);
         }
-
-        return new OkObjectResult(id);
     }
 }
