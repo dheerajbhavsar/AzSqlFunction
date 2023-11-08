@@ -2,7 +2,9 @@
 using AzSqlFunction.Repository;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
+using AzSqlFunction;
 
+[assembly:FunctionsStartup(typeof(Startup))]
 namespace AzSqlFunction;
 
 public class Startup : FunctionsStartup

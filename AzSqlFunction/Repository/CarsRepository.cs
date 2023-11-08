@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using AzSqlFunction.Data;
 using System;
 using Dapper;
+using System.Collections.Generic;
 
 namespace AzSqlFunction.Repository;
 
@@ -16,7 +17,7 @@ public class CarsRepository : ICarsRepository
         _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
-    public async Task<bool> Create(Car car)
+    public async Task<bool> CreateAsync(Car car)
     {
         var query = "INSERT INTO [dbo].[Cars] (Id, Name) VALUES (@id, @name)";
 
@@ -29,6 +30,23 @@ public class CarsRepository : ICarsRepository
             var insertedRows = await connection.ExecuteAsync(query, car);
 
             return insertedRows > 0;
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    public async Task<IEnumerable<Car>> GetAllAsync()
+    {
+        var query = "SELECT TOP 100 * FROM [dbo].[Cars]";
+        try
+        {
+            using var connection = _context.CreateConnection();
+            if (connection.State != ConnectionState.Open)
+                connection.Open();
+            var cars = await connection.QueryAsync<Car>(query);
+            return cars;
         }
         catch (Exception)
         {
