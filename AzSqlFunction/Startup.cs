@@ -13,5 +13,6 @@ public class Startup : FunctionsStartup
     {
         builder.Services.AddSingleton<DapperContext>();
         builder.Services.AddScoped<ICarsRepository, CarsRepository>();
+        builder.Services.AddMemoryCache();
     }
 }
